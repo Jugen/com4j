@@ -758,7 +758,7 @@ public final class Variant extends Number {
         // native method invocation changeType needs to happen in the COM thread, that is responsible for this variant
         // @see ComCollection#fetch
         ComThread t = thread != null ? thread : ComThreadMulti.get();
-        return t.execute(new Task<T>() {
+        return new Task<T>() {
             public T call() {
                 Com4jObject wrapper = convertTo(Com4jObject.class);
                 if(null == wrapper) {
