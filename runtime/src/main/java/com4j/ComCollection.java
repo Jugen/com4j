@@ -38,7 +38,10 @@ final class ComCollection<T> implements Iterator<T> {
         this.e = e;
         this.type = type;
         this.next = new Variant();
-        fetch();
+        // We need to remember for what thread the IEnumVARIANT was marshaled. Because if we want to interpret this
+        // VARIANT as an interface pointer later on, we need to do this in the same thread!
+        next.thread = e.getComThread();
+        e.next(0,next);
     }
 
     public boolean hasNext() {
@@ -55,6 +58,10 @@ final class ComCollection<T> implements Iterator<T> {
             // but for now let's just support interface types
             if(Com4jObject.class.isAssignableFrom(type)) {
                 return (T)next.object((Class<? extends Com4jObject>)type);
+            } else if ( type == Variant.class ) {
+            	return (T)next;
+            } else if ( type == Object.class ) {
+            	return (T)next.get();
             } else
                 throw new UnsupportedOperationException("I don't know how to handle "+type);
         } finally {
@@ -74,9 +81,6 @@ final class ComCollection<T> implements Iterator<T> {
      */
     private void fetch() {
     	next.clear();
-        // We need to remember for what thread the IEnumVARIANT was marshaled. Because if we want to interpret this
-        // VARIANT as an interface pointer later on, we need to do this in the same thread!
-        next.thread = e.getComThread();
         int r = e.next(1,next);
         if(r==0) {
             next = null;
